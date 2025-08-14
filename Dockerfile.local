@@ -1,0 +1,17 @@
+FROM golang:1.24-alpine
+
+RUN apk add git
+
+ADD . /go/src/github.com/polera/addr/
+
+RUN cd /go/src/github.com/polera/addr && \
+    go get -u && \
+    go mod vendor && \
+    go build -o /go/bin/addr && \
+    apk del git
+
+WORKDIR /go/bin
+
+CMD addr -listenPort :1333 
+
+EXPOSE 1333
