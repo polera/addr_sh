@@ -23,7 +23,10 @@ func main() {
 
 	conf, err := config.ParseConfig(valuesFile, config.Config{})
 	if err != nil {
-		_, _ = os.Stderr.WriteString(fmt.Sprintf("error parsing configuration: %s\n", err.Error()))
+		_, err = fmt.Fprintf(os.Stderr, "error parsing configuration: %s\n", err.Error())
+		if err != nil {
+			panic(err)
+		}
 		os.Exit(1)
 	}
 
