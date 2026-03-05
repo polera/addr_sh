@@ -32,6 +32,6 @@ type CIDR struct {
 }
 
 type CIDRSplit struct {
-	Subnets []string `json:"subnets"`
-	Count   int      `json:"count"`
+	Subnets []IPv4CIDR `json:"subnets"`
+	Count   int        `json:"count"`
 }

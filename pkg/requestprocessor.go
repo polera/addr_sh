@@ -125,21 +125,24 @@ func SplitCIDR(cidr string, count int) (CIDRSplit, error) {
 		return result, fmt.Errorf("cannot split /%d into %d subnets: would require /%d which exceeds /32", ones, count, newPrefix)
 	}
 
-	newMask := net.CIDRMask(newPrefix, 32)
 	ip := network.IP.To4()
 	ipInt := uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
 	subnetSize := uint32(1) << uint(32-newPrefix)
 
-	subnets := make([]string, count)
+	newPrefixStr := strconv.Itoa(newPrefix)
+	subnets := make([]IPv4CIDR, count)
 	for i := 0; i < count; i++ {
 		subnetIP := make(net.IP, 4)
-		addr := ipInt + uint32(i)*subnetSize
-		subnetIP[0] = byte(addr >> 24)
-		subnetIP[1] = byte(addr >> 16)
-		subnetIP[2] = byte(addr >> 8)
-		subnetIP[3] = byte(addr)
-		subnet := net.IPNet{IP: subnetIP, Mask: newMask}
-		subnets[i] = subnet.String()
+		subnetAddr := ipInt + uint32(i)*subnetSize
+		subnetIP[0] = byte(subnetAddr >> 24)
+		subnetIP[1] = byte(subnetAddr >> 16)
+		subnetIP[2] = byte(subnetAddr >> 8)
+		subnetIP[3] = byte(subnetAddr)
+		detail, err := GetIpv4CIDR(subnetIP.String(), newPrefixStr)
+		if err != nil {
+			return result, fmt.Errorf("error computing subnet detail: %w", err)
+		}
+		subnets[i] = detail
 	}
 
 	result.Subnets = subnets
