@@ -121,6 +121,82 @@ func TestGetIpv4CIDR(t *testing.T) {
 	}
 }
 
+func TestSplitCIDR(t *testing.T) {
+	tests := []struct {
+		name        string
+		cidr        string
+		count       int
+		wantSubnets []string
+		wantErr     bool
+	}{
+		{
+			name:        "split /24 into 2",
+			cidr:        "192.168.1.0/24",
+			count:       2,
+			wantSubnets: []string{"192.168.1.0/25", "192.168.1.128/25"},
+		},
+		{
+			name:        "split /24 into 4",
+			cidr:        "10.0.0.0/24",
+			count:       4,
+			wantSubnets: []string{"10.0.0.0/26", "10.0.0.64/26", "10.0.0.128/26", "10.0.0.192/26"},
+		},
+		{
+			name:        "split /16 into 8",
+			cidr:        "10.0.0.0/16",
+			count:       8,
+			wantSubnets: []string{"10.0.0.0/19", "10.0.32.0/19", "10.0.64.0/19", "10.0.96.0/19", "10.0.128.0/19", "10.0.160.0/19", "10.0.192.0/19", "10.0.224.0/19"},
+		},
+		{
+			name:    "count too small",
+			cidr:    "10.0.0.0/24",
+			count:   1,
+			wantErr: true,
+		},
+		{
+			name:    "count not power of 2",
+			cidr:    "10.0.0.0/24",
+			count:   3,
+			wantErr: true,
+		},
+		{
+			name:    "cannot split /31 into 4",
+			cidr:    "10.0.0.0/31",
+			count:   4,
+			wantErr: true,
+		},
+		{
+			name:    "invalid CIDR",
+			cidr:    "not-a-cidr",
+			count:   2,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := SplitCIDR(tt.cidr, tt.count)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("SplitCIDR(%q, %d) error = %v, wantErr %v", tt.cidr, tt.count, err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			if len(got.Subnets) != len(tt.wantSubnets) {
+				t.Fatalf("len(Subnets) = %d, want %d", len(got.Subnets), len(tt.wantSubnets))
+			}
+			for i, s := range got.Subnets {
+				if s != tt.wantSubnets[i] {
+					t.Errorf("Subnets[%d] = %q, want %q", i, s, tt.wantSubnets[i])
+				}
+			}
+			if got.Count != tt.count {
+				t.Errorf("Count = %d, want %d", got.Count, tt.count)
+			}
+		})
+	}
+}
+
 func TestGetRemoteHost(t *testing.T) {
 	tests := []struct {
 		name       string

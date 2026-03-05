@@ -30,3 +30,8 @@ type CIDR struct {
 	NumAddresses       float64 `json:"num_addresses"`
 	NumUsableAddresses float64 `json:"num_usable_addresses"`
 }
+
+type CIDRSplit struct {
+	Subnets []string `json:"subnets"`
+	Count   int      `json:"count"`
+}

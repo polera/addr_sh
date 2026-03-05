@@ -99,6 +99,54 @@ func GetRemoteHost(r *http.Request) *net.IP {
 	return remoteHost
 }
 
+func SplitCIDR(cidr string, count int) (CIDRSplit, error) {
+	result := CIDRSplit{}
+
+	if count < 2 {
+		return result, fmt.Errorf("count must be at least 2")
+	}
+	if count&(count-1) != 0 {
+		return result, fmt.Errorf("count must be a power of 2, got %d", count)
+	}
+
+	_, network, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return result, fmt.Errorf("invalid CIDR: %w", err)
+	}
+
+	ones, bits := network.Mask.Size()
+	if bits != 32 {
+		return result, fmt.Errorf("only IPv4 CIDRs are supported")
+	}
+
+	bitsNeeded := int(math.Log2(float64(count)))
+	newPrefix := ones + bitsNeeded
+	if newPrefix > 32 {
+		return result, fmt.Errorf("cannot split /%d into %d subnets: would require /%d which exceeds /32", ones, count, newPrefix)
+	}
+
+	newMask := net.CIDRMask(newPrefix, 32)
+	ip := network.IP.To4()
+	ipInt := uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
+	subnetSize := uint32(1) << uint(32-newPrefix)
+
+	subnets := make([]string, count)
+	for i := 0; i < count; i++ {
+		subnetIP := make(net.IP, 4)
+		addr := ipInt + uint32(i)*subnetSize
+		subnetIP[0] = byte(addr >> 24)
+		subnetIP[1] = byte(addr >> 16)
+		subnetIP[2] = byte(addr >> 8)
+		subnetIP[3] = byte(addr)
+		subnet := net.IPNet{IP: subnetIP, Mask: newMask}
+		subnets[i] = subnet.String()
+	}
+
+	result.Subnets = subnets
+	result.Count = count
+	return result, nil
+}
+
 func CalculateV4CIDR(cidr string) (CIDR, error) {
 	cidrAsInt, err := strconv.Atoi(cidr)
 
