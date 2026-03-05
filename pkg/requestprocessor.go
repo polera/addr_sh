@@ -93,9 +93,6 @@ func GetIpv4CIDR(addr string, cidr string) (IPv4CIDR, error) {
 		broadcast = make(net.IP, 4)
 	}
 
-	fmt.Println(broadcast.String())
-	fmt.Println(lastUsable.String())
-
 	v4cidr.FirstUsableAddress = firstUsable.String()
 	v4cidr.LastUsableAddress = lastUsable.String()
 	v4cidr.BroadcastAddress = broadcast.String()
