@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	addr "github.com/polera/addr_sh/pkg"
@@ -18,7 +17,5 @@ func (hc *HandlerContainer) GetAbout(w http.ResponseWriter, r *http.Request) {
 		GitHub: "https://github.com/polera",
 	}
 
-	jsonRes, _ := json.Marshal(about)
-	w.Header().Set("Content-type", "application/json")
-	w.Write(jsonRes)
+	writeJSON(w, http.StatusOK, about)
 }

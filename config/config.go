@@ -14,6 +14,8 @@ type Config struct {
 	ListenPort    string `default:":2000"`
 	TLSListenPort string `default:":4443"`
 	EnableTLS     bool   `default:"false"`
+	TLSCertFile   string `default:"fullchain.pem"`
+	TLSKeyFile    string `default:"privkey.pem"`
 }
 
 func ParseConfig(configPath string, configStruct Config) (*Config, error) {

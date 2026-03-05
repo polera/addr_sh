@@ -1,17 +1,17 @@
-FROM golang:1.24-alpine
+FROM golang:1.24-alpine AS builder
 
-RUN apk add git
+WORKDIR /build
 
-ADD . /go/src/github.com/polera/addr/
+COPY go.mod go.sum ./
+COPY vendor/ vendor/
+COPY . .
 
-RUN cd /go/src/github.com/polera/addr && \
-    go get -u && \
-    go mod vendor && \
-    go build -o /go/bin/addr && \
-    apk del git
+RUN CGO_ENABLED=0 go build -o addr .
 
-WORKDIR /go/bin
+FROM alpine:3.21
 
-CMD addr -listenPort :1333 
+COPY --from=builder /build/addr /usr/local/bin/addr
+
+CMD ["addr", "-listenPort", ":1333"]
 
 EXPOSE 1333

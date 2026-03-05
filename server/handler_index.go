@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	addr "github.com/polera/addr_sh/pkg"
@@ -17,12 +16,10 @@ func (hc *HandlerContainer) Index(w http.ResponseWriter, r *http.Request) {
 		"/ip":        "[GET] Returns IPv4 address",
 	}
 
-	addr := addr.Addr{
+	info := addr.Addr{
 		AboutRoute: "/about",
 		IP:         remoteAddr,
 		Tools:      tools,
 	}
-	jsonRes, _ := json.Marshal(addr)
-	w.Header().Set("Content-type", "application/json")
-	w.Write(jsonRes)
+	writeJSON(w, http.StatusOK, info)
 }

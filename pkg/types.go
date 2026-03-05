@@ -2,7 +2,6 @@ package addr
 
 import (
 	"net"
-	"sync"
 )
 
 type Addr struct {
@@ -15,11 +14,6 @@ type About struct {
 	Text   string `json:"about"`
 	Email  string `json:"email"`
 	GitHub string `json:"github"`
-}
-
-type Cache struct {
-	sync.RWMutex
-	Values map[string]*IPv4CIDR
 }
 
 type IPv4CIDR struct {

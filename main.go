@@ -3,18 +3,16 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/polera/addr_sh/config"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/rs/zerolog"
-	"github.com/tristanfisher/patchpanel"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/polera/addr_sh/config"
 	"github.com/polera/addr_sh/server"
-
-	"github.com/polera/addr_sh/pkg"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/rs/zerolog"
+	"github.com/tristanfisher/patchpanel"
 )
 
 func main() {
@@ -38,9 +36,6 @@ func main() {
 			Name: "requests_total",
 			Help: "The total number of requests",
 		}),
-		LookupCache: addr.Cache{
-			Values: make(map[string]*addr.IPv4CIDR),
-		},
 	}
 
 	mux := http.NewServeMux()
@@ -73,7 +68,7 @@ func main() {
 				Addr:         conf.TLSListenPort,
 			}
 			logger.Info().Str("tlsListenPort", conf.TLSListenPort).Msg("starting TLS server")
-			err := httpsServer.ListenAndServeTLS("fullchain.pem", "privkey.pem")
+			err := httpsServer.ListenAndServeTLS(conf.TLSCertFile, conf.TLSKeyFile)
 			if !errors.Is(err, http.ErrServerClosed) {
 				logger.Fatal().Err(err).Msg("error starting TLS server")
 			}

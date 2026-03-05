@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net"
 	"net/http"
 
@@ -12,19 +11,14 @@ func (hc *HandlerContainer) RemoteAddress(w http.ResponseWriter, r *http.Request
 	hc.Hits.Inc()
 	hc.Log.Debug().Msg("called remoteAddress")
 	remoteAddr := addr.GetRemoteHost(r)
-	addr := make(map[string]string)
-	addr["ip"] = remoteAddr.String()
-	jsonRes, _ := json.Marshal(addr)
-	w.Header().Set("Content-type", "application/json")
-	w.Write(jsonRes)
+	ipMap := map[string]string{"ip": remoteAddr.String()}
+	writeJSON(w, http.StatusOK, ipMap)
 }
 
 func (hc *HandlerContainer) RequestHeaders(w http.ResponseWriter, r *http.Request) {
 	hc.Hits.Inc()
 	hc.Log.Debug().Msg("called requestHeaders")
-	jsonRes, _ := json.Marshal(r.Header)
-	w.Header().Set("Content-type", "application/json")
-	w.Write(jsonRes)
+	writeJSON(w, http.StatusOK, r.Header)
 }
 
 func (hc *HandlerContainer) RequestHost(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +37,5 @@ func (hc *HandlerContainer) RequestHost(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		ptr = []string{"Not found"}
 	}
-	jsonRes, _ := json.Marshal(ptr)
-	w.Header().Set("Content-type", "application/json")
-	w.Write(jsonRes)
+	writeJSON(w, http.StatusOK, ptr)
 }
