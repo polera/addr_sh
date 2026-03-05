@@ -2,53 +2,12 @@ package addr
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/miekg/dns"
 )
-
-func reverseIP(address string) (string, error) {
-	splitAddress := strings.Split(address, ".")
-	for i, j := 0, len(splitAddress)-1; i < len(splitAddress)/2; i, j = i+1, j-1 {
-		splitAddress[i], splitAddress[j] = splitAddress[j], splitAddress[i]
-	}
-	return strings.Join(splitAddress, "."), nil
-}
-
-func GetPTR(address string) (string, error) {
-	dnsClient := new(dns.Client)
-	message := new(dns.Msg)
-	reverseAddress, _ := reverseIP(address)
-	reversed := fmt.Sprintf("%s.in-addr.arpa.", reverseAddress)
-	message.SetQuestion(reversed, dns.TypePTR)
-	message.RecursionDesired = true
-	return doDNSLookup(dnsClient, message)
-}
-
-func doDNSLookup(client *dns.Client, message *dns.Msg) (string, error) {
-	var err error
-	response, _, cliErr := client.Exchange(message, "8.8.8.8:53")
-	if cliErr != nil {
-		log.Printf("Error on DNS lookup: %s", cliErr)
-		return "", cliErr
-	}
-	if response.Rcode != dns.RcodeSuccess {
-		err = fmt.Errorf("DNS call not successful.  Response code: %d", response.Rcode)
-		log.Print(err.Error())
-	} else {
-		for _, answer := range response.Answer {
-			if ptrRecord, ok := answer.(*dns.PTR); ok {
-				return ptrRecord.Ptr, nil
-			}
-		}
-	}
-	return "", err
-}
 
 func GetIpv4CIDR(addr string, cidr string) (IPv4CIDR, error) {
 	search := fmt.Sprintf("%s/%s", addr, cidr)
@@ -60,7 +19,10 @@ func GetIpv4CIDR(addr string, cidr string) (IPv4CIDR, error) {
 		return v4cidr, err
 	}
 
-	v4network, _ := CalculateV4CIDR(cidr)
+	v4network, err := CalculateV4CIDR(cidr)
+	if err != nil {
+		return v4cidr, err
+	}
 
 	// fantastic writeup here: https://networkengineering.stackexchange.com/a/53994
 	// build host mask
@@ -119,8 +81,15 @@ func GetRemoteHost(r *http.Request) *net.IP {
 		return remoteHost
 	}
 
-	if host == "127.0.0.1" {
-		host = r.Header.Get("X-Forwarded-For")
+	if host == "127.0.0.1" || host == "::1" {
+		xff := r.Header.Get("X-Forwarded-For")
+		if xff != "" {
+			// Take the first (leftmost) IP from comma-separated list
+			if idx := strings.IndexByte(xff, ','); idx != -1 {
+				xff = xff[:idx]
+			}
+			host = strings.TrimSpace(xff)
+		}
 	}
 
 	remote := net.ParseIP(host)
@@ -134,8 +103,11 @@ func CalculateV4CIDR(cidr string) (CIDR, error) {
 	cidrAsInt, err := strconv.Atoi(cidr)
 
 	v4cidr := CIDR{}
-	if err != nil || cidrAsInt < 0 || cidrAsInt > 32 {
+	if err != nil {
 		return v4cidr, err
+	}
+	if cidrAsInt < 0 || cidrAsInt > 32 {
+		return v4cidr, fmt.Errorf("CIDR must be between 0 and 32, got %d", cidrAsInt)
 	}
 
 	numAddresses := math.Pow(float64(2), (float64(32) - float64(cidrAsInt)))
