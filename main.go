@@ -42,6 +42,7 @@ func main() {
 
 	mux.HandleFunc("/", hc.Index)
 	mux.HandleFunc("/about", hc.GetAbout)
+	mux.HandleFunc("/cidr/v4/{network}/{prefix}/split/{count}", hc.SplitV4CIDR)
 	mux.HandleFunc("/cidr/v4/{address}/{cidr}", hc.Getv4cidrDetail)
 	mux.HandleFunc("/cidr/v4/{cidr}", hc.Getv4cidrData)
 	mux.HandleFunc("/headers", hc.RequestHeaders)

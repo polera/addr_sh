@@ -14,6 +14,7 @@ A JSON API service for HTTP and networking utilities. Returns your IP address, r
 | GET | `/hostnames/{address}` | Reverse DNS lookup for a specific IP |
 | GET | `/cidr/v4/{cidr}` | Number of total and usable addresses for a CIDR prefix |
 | GET | `/cidr/v4/{address}/{cidr}` | Full CIDR details: network, broadcast, first/last usable address |
+| GET | `/cidr/v4/{network}/{cidr}/split/{count}` | Split a CIDR into N equal subnets |
 
 All responses are JSON.
 
@@ -34,6 +35,9 @@ curl https://addr.sh/cidr/v4/24
 
 # CIDR details for 192.168.1.50/24
 curl https://addr.sh/cidr/v4/192.168.1.50/24
+
+# Split 10.0.0.0/24 into 4 subnets
+curl https://addr.sh/cidr/v4/10.0.0.0/24/split/4
 ```
 
 ## Configuration
